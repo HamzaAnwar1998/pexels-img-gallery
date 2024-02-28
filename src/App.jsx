@@ -5,7 +5,7 @@ import Select from "react-select";
 import ResponsivePagination from "react-responsive-pagination";
 import "react-responsive-pagination/themes/classic.css";
 
-// custom styles
+// custom select styles mainly color changes
 const styles = {
   menuList: (base) => ({
     ...base,
@@ -50,58 +50,40 @@ const styles = {
 function App() {
   // per page options array
   const perPageOptions = [
-    {
-      value: 5,
-      label: "05",
-    },
-    {
-      value: 10,
-      label: "10",
-    },
-    {
-      value: 15,
-      label: "15",
-    },
-    {
-      value: 20,
-      label: "20",
-    },
+    { value: 5, label: "05" },
+    { value: 10, label: "10" },
+    { value: 15, label: "15" },
+    { value: 20, label: "20" },
   ];
 
-  // states
+  // genral states
   const [loading, setLoading] = useState(true);
   const [curatedPhotos, setCuratedPhotos] = useState(null);
 
-  // states for pagination
+  // pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
-  // get curated photos
   useEffect(() => {
     setLoading(true);
     const client = createClient(
       "IOXaS2Kata7fKWEGWkIhRkfIv93GRitHkTyaraZHRAxCC7kc9Ra2hLkg"
-    );
-
+    ); // my api key
     client.photos
       .curated({
         page: currentPage,
         per_page: perPage,
       })
       .then((res) => {
-        console.log(res);
-        // Check if the response page matches the requested page
-        if (res.page === currentPage) {
+        if (res.page === currentPage) { // if the response is correct
           setCuratedPhotos(res.photos);
-          setTotalPages(Math.ceil(res.total_results / perPage));
-          // Do not update currentPage and perPage if the response is unexpected
           setCurrentPage(res.page);
+          setTotalPages(Math.ceil(res.total_results / perPage)); // 800 instead of 8000
           setPerPage(res.per_page);
         } else {
-          // Handle unexpected response (optional)
-          console.log("Unexpected API response:", res);
-          setCuratedPhotos(null);
+          console.log("Unexpected API Response", res);
+          setCuratedPhotos(null); // incase server returns wrong result
         }
       })
       .catch((err) => console.log(err))
@@ -128,7 +110,7 @@ function App() {
           )}
           <div className="per-page-and-pagination">
             <div className="per-page">
-              <label>Records per page</label>
+              <label>Photos Per Page</label>
               <Select
                 value={perPageOptions.find(
                   (option) => option.value === perPage
@@ -138,16 +120,14 @@ function App() {
                   setPerPage(option.value);
                 }}
                 options={perPageOptions}
-                styles={styles}
                 menuPlacement="top"
+                styles={styles}
               />
             </div>
             <ResponsivePagination
               current={currentPage}
               total={totalPages}
-              onPageChange={(value) => {
-                setCurrentPage(value);
-              }}
+              onPageChange={(value) => setCurrentPage(value)}
             />
           </div>
         </>
