@@ -66,19 +66,21 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
-  // my api key
+  // global client declaration
   const client = createClient(
     "IOXaS2Kata7fKWEGWkIhRkfIv93GRitHkTyaraZHRAxCC7kc9Ra2hLkg"
-  );
+  ); // my api key
 
-  // get initial photos
   useEffect(() => {
     setLoading(true);
     if (query !== "") {
       client.photos
-        .search({ query, page: currentPage, per_page: perPage })
+        .search({
+          query,
+          page: currentPage,
+          per_page: perPage,
+        })
         .then((res) => {
-          console.log("inside search", res);
           if (res.page === currentPage) {
             // if the response is correct
             setCuratedPhotos(res.photos);
@@ -102,7 +104,6 @@ function App() {
           per_page: perPage,
         })
         .then((res) => {
-          console.log("inside useEffect", res);
           if (res.page === currentPage) {
             // if the response is correct
             setCuratedPhotos(res.photos);
@@ -122,25 +123,28 @@ function App() {
     }
   }, [currentPage, perPage]);
 
-  // timer state
-  const [timer, setTimer] = useState(null);
+  // search states
   const [query, setQuery] = useState("");
+  const [timer, setTimer] = useState(null);
 
-  // handle search
-  const handleSearch = (e) => {
-    const inputValue = e.target.value;
-    setQuery(inputValue);
+  // handle search with debounce
+  const handleSearch = (value) => {
+    setQuery(value);
     // clear any existing timer
     if (timer) {
       clearTimeout(timer);
     }
     const newTimer = setTimeout(() => {
-      if (inputValue.length > 3) {
+      // hit api at this point
+      if (value.length > 3) {
         setLoading(true);
         client.photos
-          .search({ query: inputValue, page: currentPage, per_page: perPage })
+          .search({
+            query: value,
+            page: currentPage,
+            per_page: perPage,
+          })
           .then((res) => {
-            console.log("inside search", res);
             if (res.page === currentPage) {
               // if the response is correct
               setCuratedPhotos(res.photos);
@@ -158,8 +162,8 @@ function App() {
           })
           .finally(() => setLoading(false));
       }
-    }, 2000);
-    setTimer(newTimer);
+    }, 2000); // 2 seconds
+    setTimer(newTimer); // create a new timer
   };
 
   return (
@@ -171,10 +175,10 @@ function App() {
           <h1>Image Gallery Using React And Pexels API</h1>
           <input
             type="text"
-            placeholder="Search for photos"
             className="search-input"
+            placeholder="Search For Photos, eg: nature"
             value={query}
-            onChange={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
           />
           {curatedPhotos && curatedPhotos.length > 0 ? (
             <div className="imgs-container">
