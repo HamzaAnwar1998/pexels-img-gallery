@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
 import "./App.css";
 import { createClient } from "pexels";
@@ -65,30 +66,101 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
+  // my api key
+  const client = createClient(
+    "IOXaS2Kata7fKWEGWkIhRkfIv93GRitHkTyaraZHRAxCC7kc9Ra2hLkg"
+  );
+
+  // get initial photos
   useEffect(() => {
     setLoading(true);
-    const client = createClient(
-      "IOXaS2Kata7fKWEGWkIhRkfIv93GRitHkTyaraZHRAxCC7kc9Ra2hLkg"
-    ); // my api key
-    client.photos
-      .curated({
-        page: currentPage,
-        per_page: perPage,
-      })
-      .then((res) => {
-        if (res.page === currentPage) { // if the response is correct
-          setCuratedPhotos(res.photos);
-          setCurrentPage(res.page);
-          setTotalPages(Math.ceil(res.total_results / perPage)); // 800 instead of 8000
-          setPerPage(res.per_page);
-        } else {
-          console.log("Unexpected API Response", res);
-          setCuratedPhotos(null); // incase server returns wrong result
-        }
-      })
-      .catch((err) => console.log(err))
-      .finally(() => setLoading(false));
+    if (query !== "") {
+      client.photos
+        .search({ query, page: currentPage, per_page: perPage })
+        .then((res) => {
+          console.log("inside search", res);
+          if (res.page === currentPage) {
+            // if the response is correct
+            setCuratedPhotos(res.photos);
+            setCurrentPage(res.page);
+            setTotalPages(Math.ceil(res.total_results / perPage)); // 800 instead of 8000
+            setPerPage(res.per_page);
+          } else {
+            console.log("Unexpected API Response", res);
+            setCuratedPhotos(null); // incase server returns wrong result
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setCuratedPhotos(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      client.photos
+        .curated({
+          page: currentPage,
+          per_page: perPage,
+        })
+        .then((res) => {
+          console.log("inside useEffect", res);
+          if (res.page === currentPage) {
+            // if the response is correct
+            setCuratedPhotos(res.photos);
+            setCurrentPage(res.page);
+            setTotalPages(Math.ceil(res.total_results / perPage)); // 800 instead of 8000
+            setPerPage(res.per_page);
+          } else {
+            console.log("Unexpected API Response", res);
+            setCuratedPhotos(null); // incase server returns wrong result
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          setCuratedPhotos(null);
+        })
+        .finally(() => setLoading(false));
+    }
   }, [currentPage, perPage]);
+
+  // timer state
+  const [timer, setTimer] = useState(null);
+  const [query, setQuery] = useState("");
+
+  // handle search
+  const handleSearch = (e) => {
+    const inputValue = e.target.value;
+    setQuery(inputValue);
+    // clear any existing timer
+    if (timer) {
+      clearTimeout(timer);
+    }
+    const newTimer = setTimeout(() => {
+      if (inputValue.length > 3) {
+        setLoading(true);
+        client.photos
+          .search({ query: inputValue, page: currentPage, per_page: perPage })
+          .then((res) => {
+            console.log("inside search", res);
+            if (res.page === currentPage) {
+              // if the response is correct
+              setCuratedPhotos(res.photos);
+              setCurrentPage(res.page);
+              setTotalPages(Math.ceil(res.total_results / perPage)); // 800 instead of 8000
+              setPerPage(res.per_page);
+            } else {
+              console.log("Unexpected API Response", res);
+              setCuratedPhotos(null); // incase server returns wrong result
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+            setCuratedPhotos(null);
+          })
+          .finally(() => setLoading(false));
+      }
+    }, 2000);
+    setTimer(newTimer);
+  };
 
   return (
     <div className="background">
@@ -97,6 +169,13 @@ function App() {
       ) : (
         <>
           <h1>Image Gallery Using React And Pexels API</h1>
+          <input
+            type="text"
+            placeholder="Search for photos"
+            className="search-input"
+            value={query}
+            onChange={handleSearch}
+          />
           {curatedPhotos && curatedPhotos.length > 0 ? (
             <div className="imgs-container">
               {curatedPhotos.map((data) => (
